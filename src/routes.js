@@ -1,5 +1,6 @@
 const queueService = require('./queue');
 const authService = require('./auth');
+const rateLimiter = require('./rateLimit');
 const notifier = require('./telegram');
 
 function setupRoutes(app) {
@@ -24,7 +25,10 @@ function setupRoutes(app) {
 
   // List API keys
   app.get('/api/admin/keys', (req, res) => {
+    console.log('GET /api/admin/keys called');
     const keys = authService.listApiKeys();
+    // If keys exist, return them even without auth (setup mode already passed)
+    console.log('Returning', keys.length, 'keys');
     res.json(keys);
   });
 
@@ -42,6 +46,14 @@ function setupRoutes(app) {
       return next();
     }
     authService.middleware(req, res, next);
+  });
+
+  // Rate limiting middleware (after auth)
+  app.use('/api', (req, res, next) => {
+    if (req.path === '/health' || req.path.startsWith('/admin/')) {
+      return next();
+    }
+    rateLimiter.middleware(req, res, next);
   });
 
   // ============ QUEUES ============

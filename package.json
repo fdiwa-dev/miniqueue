@@ -3,9 +3,15 @@
   "version": "1.0.0",
   "description": "Simple job queue API for developers",
   "main": "src/index.js",
+  "bin": {
+    "miniqueue": "./src/cli.js"
+  },
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node src/index.js"
+    "dev": "node src/index.js",
+    "cli": "node src/cli.js",
+    "health": "node src/cli.js health",
+    "test": "node src/test.js"
   },
   "keywords": [
     "queue",
