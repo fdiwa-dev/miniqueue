@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MiniQueue — API de files d'attente simple</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+</head>
+<body class="bg-gray-50">
+  <div class="max-w-5xl mx-auto px-6 py-20">
+    <!-- Hero -->
+    <div class="text-center mb-20">
+      <h1 class="text-6xl font-bold mb-6">📋 <span class="text-blue-600">MiniQueue</span></h1>
+      <p class="text-2xl text-gray-600 mb-4">L'API de file d'attente la plus simple pour les développeurs</p>
+      <p class="text-lg text-gray-500 mb-8">Crée, priorise et traite des jobs en secondes. Pas de Redis, pas de configuration, pas de prise de tête.</p>
+      <div class="flex gap-4 justify-center">
+        <button onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})" class="px-8 py-4 bg-blue-600 text-white rounded-xl text-lg font-semibold hover:bg-blue-700">
+          💰 Voir les offres
+        </button>
+        <a href="#demo" class="px-8 py-4 bg-white border-2 border-gray-200 text-gray-700 rounded-xl text-lg font-semibold hover:border-gray-300">
+          🚀 Essayer la démo
+        </a>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div class="grid md:grid-cols-3 gap-8 mb-20">
+      <div class="bg-white rounded-2xl p-8 shadow-sm">
+        <div class="text-4xl mb-4">⚡</div>
+        <h3 class="text-xl font-bold mb-2">Zéro complexité</h3>
+        <p class="text-gray-500">Pas de Redis, pas de Docker, pas de Kafka. Une API REST, ça marche.</p>
+      </div>
+      <div class="bg-white rounded-2xl p-8 shadow-sm">
+        <div class="text-4xl mb-4">🎯</div>
+        <h3 class="text-xl font-bold mb-2">Priorité intelligente</h3>
+        <p class="text-gray-500">Les jobs prioritaires passent devant. FIFO + priorité, le meilleur des deux mondes.</p>
+      </div>
+      <div class="bg-white rounded-2xl p-8 shadow-sm">
+        <div class="text-4xl mb-4">📦</div>
+        <h3 class="text-xl font-bold mb-2">SDK prêt à l'emploi</h3>
+        <p class="text-gray-500">Client npm, docs claires, 5 lignes pour commencer. Compatible Node.js, browser et CLI.</p>
+      </div>
+    </div>
+
+    <!-- API Reference -->
+    <div class="bg-white rounded-2xl p-8 shadow-sm mb-20">
+      <h2 class="text-2xl font-bold mb-6">📖 API en un coup d'œil</h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="p-4 bg-gray-50 rounded-xl font-mono text-sm">
+          <p class="mb-2"><span class="text-green-600 font-bold">POST</span> /api/queues</p>
+          <p class="text-gray-500">→ Créer une file d'attente</p>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-xl font-mono text-sm">
+          <p class="mb-2"><span class="text-blue-600 font-bold">POST</span> /api/queues/:id/jobs</p>
+          <p class="text-gray-500">→ Enqueue un job</p>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-xl font-mono text-sm">
+          <p class="mb-2"><span class="text-blue-600 font-bold">POST</span> /api/queues/:id/dequeue</p>
+          <p class="text-gray-500">→ Récupérer le prochain job</p>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-xl font-mono text-sm">
+          <p class="mb-2"><span class="text-green-600 font-bold">POST</span> /api/jobs/:id/complete</p>
+          <p class="text-gray-500">→ Marquer complété</p>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-xl font-mono text-sm">
+          <p class="mb-2"><span class="text-red-600 font-bold">POST</span> /api/jobs/:id/fail</p>
+          <p class="text-gray-500">→ Marquer échoué</p>
+        </div>
+        <div class="p-4 bg-gray-50 rounded-xl font-mono text-sm">
+          <p class="mb-2"><span class="text-gray-600 font-bold">GET</span> /api/queues/:id/stats</p>
+          <p class="text-gray-500">→ Statistiques temps réel</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pricing -->
+    <div id="pricing" class="mb-20">
+      <h2 class="text-3xl font-bold text-center mb-10">💰 Tarifs simples</h2>
+      <div class="grid md:grid-cols-3 gap-8">
+        <!-- Free -->
+        <div class="bg-white rounded-2xl p-8 shadow-sm border-2 border-gray-100">
+          <h3 class="text-xl font-bold mb-2">🌱 Gratuit</h3>
+          <p class="text-4xl font-bold mb-4">0 €<span class="text-lg text-gray-400">/mois</span></p>
+          <ul class="space-y-3 mb-8 text-gray-600">
+            <li>✅ 1 queue</li>
+            <li>✅ 100 jobs/jour</li>
+            <li>✅ API REST</li>
+            <li>✅ Documentation</li>
+            <li>❌ Priorité</li>
+            <li>❌ Support</li>
+          </ul>
+          <a href="https://miniqueue.com" class="block text-center w-full py-3 border-2 border-gray-200 rounded-xl font-semibold hover:border-blue-600">
+            Commencer
+          </a>
+        </div>
+
+        <!-- Pro -->
+        <div class="bg-white rounded-2xl p-8 shadow-sm border-2 border-blue-500 relative">
+          <span class="absolute -top-3 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold">POPULAIRE</span>
+          <h3 class="text-xl font-bold mb-2">🚀 Pro</h3>
+          <p class="text-4xl font-bold mb-4">5 €<span class="text-lg text-gray-400">/mois</span></p>
+          <ul class="space-y-3 mb-8 text-gray-600">
+            <li>✅ 10 queues</li>
+            <li>✅ 5000 jobs/jour</li>
+            <li>✅ API REST</li>
+            <li>✅ Priorité</li>
+            <li>✅ SDK Client</li>
+            <li>❌ Support prioritaire</li>
+          </ul>
+          <a href="https://gumroad.com" class="block text-center w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700">
+            Acheter — 5€/mois
+          </a>
+        </div>
+
+        <!-- Enterprise -->
+        <div class="bg-white rounded-2xl p-8 shadow-sm border-2 border-gray-100">
+          <h3 class="text-xl font-bold mb-2">🏢 Business</h3>
+          <p class="text-4xl font-bold mb-4">15 €<span class="text-lg text-gray-400">/mois</span></p>
+          <ul class="space-y-3 mb-8 text-gray-600">
+            <li>✅ Queues illimitées</li>
+            <li>✅ Jobs illimités</li>
+            <li>✅ API REST</li>
+            <li>✅ Priorité</li>
+            <li>✅ SDK Client</li>
+            <li>✅ Support prioritaire</li>
+          </ul>
+          <a href="https://gumroad.com" class="block text-center w-full py-3 border-2 border-gray-200 rounded-xl font-semibold hover:border-blue-600">
+            Acheter — 15€/mois
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center text-gray-500 text-sm">
+      <p>MiniQueue par Fdiwa 👻 · Construit avec 0€ de budget · 2026</p>
+    </div>
+  </div>
+</body>
+</html>

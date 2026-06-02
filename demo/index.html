@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MiniQueue Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; }
+    .job-pending { border-left: 4px solid #f59e0b; }
+    .job-running { border-left: 4px solid #3b82f6; }
+    .job-completed { border-left: 4px solid #10b981; }
+    .job-failed { border-left: 4px solid #ef4444; }
+    .job-cancelled { border-left: 4px solid #6b7280; }
+  </style>
+</head>
+<body class="bg-gray-50 p-6">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold mb-2">📋 MiniQueue</h1>
+    <p class="text-gray-600 mb-6">Simple job queue API — Dashboard de démo</p>
+
+    <!-- API Status -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold">API Status</h2>
+        <span id="apiStatus" class="px-3 py-1 rounded-full text-sm bg-gray-200">...</span>
+      </div>
+      <div class="mt-4 grid grid-cols-3 gap-4">
+        <div class="text-center">
+          <p class="text-2xl font-bold" id="totalQueues">0</p>
+          <p class="text-sm text-gray-500">Queues</p>
+        </div>
+        <div class="text-center">
+          <p class="text-2xl font-bold" id="totalJobs">0</p>
+          <p class="text-sm text-gray-500">Jobs</p>
+        </div>
+        <div class="text-center">
+          <p class="text-2xl font-bold" id="uptime">-</p>
+          <p class="text-sm text-gray-500">Status</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Queue -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <h2 class="text-lg font-semibold mb-4">➕ Nouvelle Queue</h2>
+      <div class="flex gap-3">
+        <input id="queueNameInput" type="text" placeholder="Nom de la queue" class="flex-1 px-4 py-2 border rounded-lg">
+        <button onclick="createQueue()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Créer</button>
+      </div>
+    </div>
+
+    <!-- Queues List -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <h2 class="text-lg font-semibold mb-4">📦 Queues</h2>
+      <div id="queuesList" class="space-y-4">
+        <p class="text-gray-400 text-center py-8">Aucune queue créée</p>
+      </div>
+    </div>
+
+    <!-- Enqueue Job -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-6 hidden" id="jobForm">
+      <h2 class="text-lg font-semibold mb-4">📥 Enqueue un Job</h2>
+      <select id="queueSelect" class="w-full px-4 py-2 border rounded-lg mb-3">
+        <option value="">Sélectionne une queue...</option>
+      </select>
+      <textarea id="jobPayload" rows="3" placeholder='Payload JSON (ex: {"task":"send_email","to":"user@test.com"})' class="w-full px-4 py-2 border rounded-lg mb-3"></textarea>
+      <div class="flex gap-3 items-center">
+        <label class="text-sm text-gray-600">Priorité:</label>
+        <input id="jobPriority" type="number" value="0" min="0" max="10" class="w-20 px-3 py-2 border rounded-lg">
+        <button onclick="enqueueJob()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Enqueue</button>
+      </div>
+    </div>
+
+    <!-- Jobs List -->
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <h2 class="text-lg font-semibold mb-4">📋 Jobs</h2>
+      <div id="jobsList" class="space-y-2">
+        <p class="text-gray-400 text-center py-8">Aucun job</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = window.location.origin;
+
+    async function api(path, options = {}) {
+      const res = await fetch(`${API_URL}${path}`, {
+        headers: { 'Content-Type': 'application/json', ...options.headers },
+        ...options,
+      });
+      if (res.status === 204) return null;
+      return res.json();
+    }
+
+    async function checkAPI() {
+      const el = document.getElementById('apiStatus');
+      try {
+        const data = await api('/api/health');
+        el.textContent = '✅ OK';
+        el.className = 'px-3 py-1 rounded-full text-sm bg-green-100 text-green-800';
+        document.getElementById('uptime').textContent = 'En ligne';
+      } catch {
+        el.textContent = '❌ Hors ligne';
+        el.className = 'px-3 py-1 rounded-full text-sm bg-red-100 text-red-800';
+      }
+    }
+
+    async function loadQueues() {
+      try {
+        const queues = await api('/api/queues');
+        const container = document.getElementById('queuesList');
+        const select = document.getElementById('queueSelect');
+        
+        if (queues.length === 0) {
+          container.innerHTML = '<p class="text-gray-400 text-center py-8">Aucune queue créée</p>';
+          select.innerHTML = '<option value="">Sélectionne une queue...</option>';
+          document.getElementById('jobForm').classList.add('hidden');
+          return;
+        }
+
+        document.getElementById('totalQueues').textContent = queues.length;
+        document.getElementById('jobForm').classList.remove('hidden');
+        select.innerHTML = '<option value="">Sélectionne une queue...</option>';
+
+        let html = '';
+        let totalJobs = 0;
+        for (const q of queues) {
+          let stats = { total: 0, pending: 0, running: 0, completed: 0, failed: 0, cancelled: 0 };
+          try { stats = await api(`/api/queues/${q.id}/stats`); } catch {}
+          totalJobs += stats.total;
+          
+          html += `
+            <div class="border rounded-lg p-4">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 class="font-medium">${q.name}</h3>
+                  <p class="text-xs text-gray-400">${q.id.slice(0, 8)}...</p>
+                </div>
+                <div class="flex gap-2 text-xs">
+                  <span class="px-2 py-1 bg-yellow-100 rounded">${stats.pending} pending</span>
+                  <span class="px-2 py-1 bg-blue-100 rounded">${stats.running} running</span>
+                  <span class="px-2 py-1 bg-green-100 rounded">${stats.completed} done</span>
+                  ${stats.failed > 0 ? `<span class="px-2 py-1 bg-red-100 rounded">${stats.failed} failed</span>` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+
+          select.innerHTML += `<option value="${q.id}">${q.name}</option>`;
+        }
+
+        document.getElementById('totalJobs').textContent = totalJobs;
+        container.innerHTML = html;
+        loadJobs();
+      } catch {}
+    }
+
+    async function loadJobs() {
+      try {
+        const queues = await api('/api/queues');
+        const container = document.getElementById('jobsList');
+        
+        let allJobs = [];
+        for (const q of queues) {
+          const jobs = await api(`/api/queues/${q.id}/jobs?limit=20`);
+          allJobs = allJobs.concat(jobs.map(j => ({ ...j, queueName: q.name })));
+        }
+
+        if (allJobs.length === 0) {
+          container.innerHTML = '<p class="text-gray-400 text-center py-8">Aucun job</p>';
+          return;
+        }
+
+        container.innerHTML = allJobs.map(job => `
+          <div class="job-${job.status} bg-gray-50 rounded-lg p-3 text-sm">
+            <div class="flex justify-between">
+              <span class="font-medium">${job.queueName}</span>
+              <span class="px-2 py-0.5 rounded-full text-xs bg-${job.status === 'completed' ? 'green' : job.status === 'failed' ? 'red' : job.status === 'running' ? 'blue' : job.status === 'cancelled' ? 'gray' : 'yellow'}-100">${job.status}</span>
+            </div>
+            <div class="text-gray-500 text-xs mt-1">
+              ${job.id.slice(0, 8)}... · priorité ${job.priority}
+              ${job.completed_at ? '· ' + job.completed_at : ''}
+            </div>
+            <div class="text-xs text-gray-400 mt-1 truncate">${JSON.stringify(job.payload)}</div>
+          </div>
+        `).join('');
+      } catch {}
+    }
+
+    async function createQueue() {
+      const name = document.getElementById('queueNameInput').value.trim();
+      if (!name) return alert('Donne un nom à la queue');
+      await api('/api/queues', { method: 'POST', body: JSON.stringify({ name }) });
+      document.getElementById('queueNameInput').value = '';
+      loadQueues();
+    }
+
+    async function enqueueJob() {
+      const queueId = document.getElementById('queueSelect').value;
+      const payload = document.getElementById('jobPayload').value || '{}';
+      const priority = document.getElementById('jobPriority').value || 0;
+      if (!queueId) return alert('Sélectionne une queue');
+      let parsed;
+      try { parsed = JSON.parse(payload); } catch { return alert('Payload JSON invalide'); }
+      await api(`/api/queues/${queueId}/jobs`, {
+        method: 'POST',
+        body: JSON.stringify({ payload: parsed, priority: parseInt(priority) }),
+      });
+      document.getElementById('jobPayload').value = '';
+      loadQueues();
+    }
+
+    // Init
+    checkAPI();
+    loadQueues();
+    setInterval(() => { checkAPI(); loadQueues(); }, 3000);
+  </script>
+</body>
+</html>
