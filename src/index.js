@@ -12,6 +12,9 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+// Servir les fichiers statiques (landing page, demo, etc.)
+app.use(express.static(__dirname + '/..'));
+
 // Setup API routes
 setupRoutes(app);
 
