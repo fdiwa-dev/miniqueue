@@ -1,230 +1,229 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MiniQueue — API de files d'attente simple</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MiniQueue Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0891B2',
+            surface: '#0F172A',
+            card: '#1E293B',
+            muted: '#64748B',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .stat-card { transition: transform 0.15s, box-shadow 0.15s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .live-dot { animation: pulse-dot 2s ease-in-out infinite; }
+  </style>
 </head>
-<body class="bg-gray-50">
-  <div class="max-w-5xl mx-auto px-6 py-20">
-    <!-- Hero -->
-    <div class="text-center mb-20">
-      <h1 class="text-6xl font-bold mb-6">📋 <span class="text-blue-600">MiniQueue</span></h1>
-      <p class="text-2xl text-gray-600 mb-4">L'API de file d'attente la plus simple pour les développeurs</p>
-      <p class="text-lg text-gray-500 mb-8">Crée, priorise et traite des jobs en secondes. Pas de Redis, pas de configuration, pas de prise de tête.</p>
-      <div class="flex gap-4 justify-center">
-        <button onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})" class="px-8 py-4 bg-blue-600 text-white rounded-xl text-lg font-semibold hover:bg-blue-700">
-          💰 Voir les offres
+<body class="bg-surface text-white min-h-screen">
+  <div class="max-w-6xl mx-auto px-4 py-6">
+
+    <!-- HEADER -->
+    <header class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">📦 MiniQueue</h1>
+        <p class="text-muted text-sm mt-0.5">Job Queue API · Real-time Dashboard</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="statusBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-green-900/40 text-green-400 border border-green-700/50">
+          <span class="live-dot w-2 h-2 rounded-full bg-green-400"></span>
+          <span id="statusText">Connected</span>
+        </span>
+        <button onclick="refresh()" class="px-4 py-2 bg-card border border-gray-700 rounded-lg text-sm hover:bg-gray-700/50 transition-colors">
+          ↻ Refresh
         </button>
-        <a href="#demo" class="px-8 py-4 bg-white border-2 border-gray-200 text-gray-700 rounded-xl text-lg font-semibold hover:border-gray-300">
-          🚀 Essayer la démo
-        </a>
+      </div>
+    </header>
+
+    <!-- STATS GRID -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="stat-card bg-card rounded-xl p-5 border border-gray-800">
+        <p class="text-muted text-xs uppercase tracking-wider mb-1">Queues</p>
+        <p id="queuesCount" class="text-3xl font-bold">—</p>
+      </div>
+      <div class="stat-card bg-card rounded-xl p-5 border border-gray-800">
+        <p class="text-muted text-xs uppercase tracking-wider mb-1">Total Jobs</p>
+        <p id="totalJobs" class="text-3xl font-bold">—</p>
+      </div>
+      <div class="stat-card bg-card rounded-xl p-5 border border-gray-800">
+        <p class="text-muted text-xs uppercase tracking-wider mb-1">Pending</p>
+        <p id="pendingJobs" class="text-3xl font-bold text-yellow-400">—</p>
+      </div>
+      <div class="stat-card bg-card rounded-xl p-5 border border-gray-800">
+        <p class="text-muted text-xs uppercase tracking-wider mb-1">Completed</p>
+        <p id="completedJobs" class="text-3xl font-bold text-green-400">—</p>
       </div>
     </div>
 
-    <!-- Features -->
-    <div class="grid md:grid-cols-3 gap-8 mb-20">
-      <div class="bg-white rounded-2xl p-8 shadow-sm">
-        <div class="text-4xl mb-4">⚡</div>
-        <h3 class="text-xl font-bold mb-2">Zéro complexité</h3>
-        <p class="text-gray-500">Pas de Redis, pas de Docker, pas de Kafka. Une API REST, ça marche.</p>
+    <!-- MAIN CONTENT -->
+    <div class="grid lg:grid-cols-3 gap-6">
+
+      <!-- QUEUES LIST -->
+      <div class="lg:col-span-2 bg-card rounded-xl border border-gray-800">
+        <div class="px-5 py-4 border-b border-gray-800 flex items-center justify-between">
+          <h2 class="font-semibold">Queues</h2>
+          <span id="queuesUpdated" class="text-xs text-muted"></span>
+        </div>
+        <div id="queuesList" class="divide-y divide-gray-800">
+          <div class="p-5 text-center text-muted text-sm">Loading queues...</div>
+        </div>
       </div>
-      <div class="bg-white rounded-2xl p-8 shadow-sm">
-        <div class="text-4xl mb-4">🎯</div>
-        <h3 class="text-xl font-bold mb-2">Priorité intelligente</h3>
-        <p class="text-gray-500">Les jobs prioritaires passent devant. FIFO + priorité, le meilleur des deux mondes.</p>
+
+      <!-- RECENT ACTIVITY -->
+      <div class="bg-card rounded-xl border border-gray-800">
+        <div class="px-5 py-4 border-b border-gray-800">
+          <h2 class="font-semibold">Recent Activity</h2>
+        </div>
+        <div id="activityList" class="divide-y divide-gray-800 max-h-96 overflow-y-auto">
+          <div class="p-5 text-center text-muted text-sm">No activity yet</div>
+        </div>
       </div>
-      <div class="bg-white rounded-2xl p-8 shadow-sm">
-        <div class="text-4xl mb-4">📦</div>
-        <h3 class="text-xl font-bold mb-2">SDK prêt à l'emploi</h3>
-        <p class="text-gray-500">Client npm, docs claires, 5 lignes pour commencer. Compatible Node.js, browser et CLI.</p>
-      </div>
+
     </div>
 
-    <!-- API Reference -->
-    <div class="bg-white rounded-2xl p-8 shadow-sm mb-20">
-      <h2 class="text-2xl font-bold mb-6">📖 API en un coup d'œil</h2>
-      <div class="grid md:grid-cols-2 gap-4">
-        <div class="p-4 bg-gray-50 rounded-xl font-mono text-sm">
-          <p class="mb-2"><span class="text-green-600 font-bold">POST</span> /api/queues</p>
-          <p class="text-gray-500">→ Créer une file d'attente</p>
-        </div>
-        <div class="p-4 bg-gray-50 rounded-xl font-mono text-sm">
-          <p class="mb-2"><span class="text-blue-600 font-bold">POST</span> /api/queues/:id/jobs</p>
-          <p class="text-gray-500">→ Enqueue un job</p>
-        </div>
-        <div class="p-4 bg-gray-50 rounded-xl font-mono text-sm">
-          <p class="mb-2"><span class="text-blue-600 font-bold">POST</span> /api/queues/:id/dequeue</p>
-          <p class="text-gray-500">→ Récupérer le prochain job</p>
-        </div>
-        <div class="p-4 bg-gray-50 rounded-xl font-mono text-sm">
-          <p class="mb-2"><span class="text-green-600 font-bold">POST</span> /api/jobs/:id/complete</p>
-          <p class="text-gray-500">→ Marquer complété</p>
-        </div>
-        <div class="p-4 bg-gray-50 rounded-xl font-mono text-sm">
-          <p class="mb-2"><span class="text-red-600 font-bold">POST</span> /api/jobs/:id/fail</p>
-          <p class="text-gray-500">→ Marquer échoué</p>
-        </div>
-        <div class="p-4 bg-gray-50 rounded-xl font-mono text-sm">
-          <p class="mb-2"><span class="text-gray-600 font-bold">GET</span> /api/queues/:id/stats</p>
-          <p class="text-gray-500">→ Statistiques temps réel</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Demo -->
-    <div id="demo" class="mb-20">
-      <h2 class="text-3xl font-bold text-center mb-6">🎮 Essayez la démo</h2>
-      <p class="text-center text-gray-500 mb-8">Testez MiniQueue directement — créez une queue, ajoutez des jobs, regardez les stats en temps réel.</p>
-      <div class="bg-white rounded-2xl p-6 shadow-sm">
-        <div class="grid md:grid-cols-2 gap-6 mb-6">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Nom de la queue</label>
-            <input id="demoQueueName" type="text" value="demo-queue" class="w-full px-4 py-2 border border-gray-300 rounded-lg font-mono text-sm">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Payload du job (JSON)</label>
-            <input id="demoJobPayload" type="text" value='{"task":"hello"}' class="w-full px-4 py-2 border border-gray-300 rounded-lg font-mono text-sm">
-          </div>
-        </div>
-        <div class="flex gap-3 mb-6">
-          <button onclick="demoCreateQueue()" class="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700">📦 Créer une queue</button>
-          <button onclick="demoEnqueue()" class="px-6 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">➕ Ajouter un job</button>
-          <button onclick="demoDequeue()" class="px-6 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700">⬇️ Récupérer un job</button>
-          <button onclick="demoStats()" class="px-6 py-2 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700">📊 Stats</button>
-        </div>
-        <textarea id="demoOutput" rows="8" class="w-full p-4 bg-gray-900 text-green-400 rounded-xl font-mono text-sm" readonly placeholder="Les résultats apparaîtront ici..."></textarea>
-        <p class="text-xs text-gray-400 mt-2">💡 Les données sont stockées sur notre serveur API de démonstration.</p>
-      </div>
-    </div>
-
-    <script>
-    const API_BASE = 'https://heading-enterprises-cycle-hosts.trycloudflare.com';
-    let currentQueueId = null;
-
-    function log(msg) {
-      const el = document.getElementById('demoOutput');
-      el.value += msg + '\\n';
-      el.scrollTop = el.scrollHeight;
-    }
-
-    async function api(path, opts = {}) {
-      try {
-        const res = await fetch(API_BASE + path, {
-          headers: { 'Content-Type': 'application/json', ...opts.headers },
-          ...opts
-        });
-        const data = await res.text();
-        log('> ' + res.status + ' ' + res.statusText);
-        try { return JSON.parse(data); } catch { return data; }
-      } catch(e) {
-        log('❌ Erreur: ' + e.message);
-      }
-    }
-
-    async function demoCreateQueue() {
-      log('--- Création de queue ---');
-      const name = document.getElementById('demoQueueName').value;
-      const result = await api('/api/queues', { method: 'POST', body: JSON.stringify({ name }) });
-      if (result && result.id) {
-        currentQueueId = result.id;
-        log('✅ Queue créée: ' + result.id);
-      }
-    }
-
-    async function demoEnqueue() {
-      if (!currentQueueId) { log('❌ Créez d\'abord une queue'); return; }
-      log('--- Ajout job ---');
-      const payload = document.getElementById('demoJobPayload').value;
-      let data;
-      try { data = JSON.parse(payload); } catch { data = { task: payload }; }
-      const result = await api('/api/queues/' + currentQueueId + '/jobs', { method: 'POST', body: JSON.stringify({ data }) });
-      if (result && result.id) log('✅ Job ajouté: ' + result.id);
-    }
-
-    async function demoDequeue() {
-      if (!currentQueueId) { log('❌ Créez d\'abord une queue'); return; }
-      log('--- Récupération job ---');
-      const result = await api('/api/queues/' + currentQueueId + '/dequeue', { method: 'POST' });
-      if (result && result.id) {
-        log('✅ Job récupéré: ' + JSON.stringify(result, null, 2));
-      } else {
-        log('ℹ️ Aucun job en attente');
-      }
-    }
-
-    async function demoStats() {
-      if (!currentQueueId) { log('❌ Créez d\'abord une queue'); return; }
-      log('--- Stats ---');
-      const result = await api('/api/queues/' + currentQueueId + '/stats');
-      if (result) log(JSON.stringify(result, null, 2));
-    }
-    </script>
-
-    <!-- Pricing -->
-    <div id="pricing" class="mb-20">
-      <h2 class="text-3xl font-bold text-center mb-10">💰 Tarifs simples</h2>
-      <div class="grid md:grid-cols-3 gap-8">
-        <!-- Free -->
-        <div class="bg-white rounded-2xl p-8 shadow-sm border-2 border-gray-100">
-          <h3 class="text-xl font-bold mb-2">🌱 Gratuit</h3>
-          <p class="text-4xl font-bold mb-4">0$<span class="text-lg text-gray-400">/mois</span></p>
-          <ul class="space-y-3 mb-8 text-gray-600">
-            <li>✅ 1 queue</li>
-            <li>✅ 100 jobs/jour</li>
-            <li>✅ API REST</li>
-            <li>✅ Documentation</li>
-            <li>❌ Priorité</li>
-            <li>❌ Support</li>
-          </ul>
-          <a href="https://github.com/fdiwa-dev/miniqueue" class="block text-center w-full py-3 border-2 border-gray-200 rounded-xl font-semibold hover:border-blue-600">
-            🚀 Commencer gratuitement
-          </a>
-        </div>
-
-        <!-- Pro -->
-        <div class="bg-white rounded-2xl p-8 shadow-sm border-2 border-blue-500 relative">
-          <span class="absolute -top-3 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold">POPULAIRE</span>
-          <h3 class="text-xl font-bold mb-2">🚀 Pro</h3>
-          <p class="text-4xl font-bold mb-4">$5<span class="text-lg text-gray-400">/mois</span></p>
-          <ul class="space-y-3 mb-8 text-gray-600">
-            <li>✅ 10 queues</li>
-            <li>✅ 5000 jobs/jour</li>
-            <li>✅ API REST</li>
-            <li>✅ Priorité</li>
-            <li>✅ SDK Client</li>
-            <li>❌ Support prioritaire</li>
-          </ul>
-          <a href="https://miniqueue.lemonsqueezy.com/checkout/buy/d90ebfd4-babe-4a68-877c-513ed43b2d07" class="block text-center w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700">
-            Acheter — $5/mois
-          </a>
-        </div>
-
-        <!-- Enterprise -->
-        <div class="bg-white rounded-2xl p-8 shadow-sm border-2 border-gray-100">
-          <h3 class="text-xl font-bold mb-2">🏢 Business</h3>
-          <p class="text-4xl font-bold mb-4">$15<span class="text-lg text-gray-400">/mois</span></p>
-          <ul class="space-y-3 mb-8 text-gray-600">
-            <li>✅ Queues illimitées</li>
-            <li>✅ Jobs illimités</li>
-            <li>✅ API REST</li>
-            <li>✅ Priorité</li>
-            <li>✅ SDK Client</li>
-            <li>✅ Support prioritaire</li>
-          </ul>
-          <a href="https://miniqueue.lemonsqueezy.com/checkout/buy/a6640f74-7de4-4f9e-bd44-c32133849857" class="block text-center w-full py-3 bg-gray-900 text-white rounded-xl font-semibold hover:bg-gray-800">
-            Acheter — $15/mois
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="text-center text-gray-500 text-sm">
-      <p>MiniQueue par Fdiwa 👻 · 2026 · <a href="https://github.com/fdiwa-dev/miniqueue" class="text-blue-600 hover:underline">GitHub</a> · <a href="https://t.me/Fdiwa_bot" class="text-blue-600 hover:underline">Telegram</a></p>
-    </div>
+    <!-- API INFO -->
+    <footer class="mt-8 pt-6 border-t border-gray-800 text-xs text-muted flex items-center justify-between">
+      <span>MiniQueue API</span>
+      <span id="apiUrl"></span>
+    </footer>
   </div>
+
+  <script>
+    // Config — change this to your tunnel URL
+    const API_BASE = 'https://ide-fathers-likewise-kelly.trycloudflare.com';
+
+    // Helpers
+    const $ = id => document.getElementById(id);
+
+    function ago(dateStr) {
+      const sec = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+      if (sec < 5) return 'just now';
+      if (sec < 60) return `${sec}s ago`;
+      const min = Math.floor(sec / 60);
+      if (min < 60) return `${min}m ago`;
+      return `${Math.floor(min / 60)}h ago`;
+    }
+
+    // Fetch with timeout
+    async function api(path, timeoutMs = 5000) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const res = await fetch(`${API_BASE}${path}`, { signal: controller.signal });
+        clearTimeout(id);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      } catch (e) {
+        clearTimeout(id);
+        throw e;
+      }
+    }
+
+    // Render a single queue row
+    function renderQueue(q) {
+      const isFailing = q.failedCount > 0 && q.failedCount > q.completedCount * 0.5;
+      const statusColor = q.pendingCount > 10 ? 'text-yellow-400'
+                        : isFailing ? 'text-red-400'
+                        : 'text-green-400';
+      const statusDot = q.pendingCount > 10 ? 'bg-yellow-400'
+                       : isFailing ? 'bg-red-400'
+                       : 'bg-green-400';
+      return `
+        <div class="px-5 py-4 hover:bg-white/5 transition-colors">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full ${statusDot}"></span>
+              <span class="font-medium text-sm">${q.name || 'default'}</span>
+            </div>
+            <span class="text-xs ${statusColor} font-medium">
+              ${q.pendingCount} pending
+            </span>
+          </div>
+          <div class="flex gap-4 text-xs text-muted">
+            <span>${q.completedCount || 0} completed</span>
+            <span>${q.failedCount || 0} failed</span>
+            ${q.lastActivity ? `<span>Last: ${ago(q.lastActivity)}</span>` : ''}
+          </div>
+          <!-- mini bar -->
+          <div class="mt-2 h-1.5 rounded-full bg-gray-800 overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-300"
+                 style="width: ${Math.min(100, (q.completedCount || 0) / Math.max(1, (q.completedCount + q.failedCount)) * 100)}%;
+                        background: ${isFailing ? '#EF4444' : '#0891B2'};">
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Main refresh
+    async function refresh() {
+      const btn = document.querySelector('button');
+      btn.textContent = '⏳ Refreshing...';
+      btn.disabled = true;
+
+      try {
+        // Health check
+        const health = await api('/api/health', 3000);
+        const statusBadge = $('statusBadge');
+        const statusText = $('statusText');
+
+        if (health && (health.status === 'ok' || health.status === 'healthy')) {
+          statusBadge.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-green-900/40 text-green-400 border border-green-700/50';
+          statusText.textContent = 'Connected';
+        } else {
+          statusBadge.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-yellow-900/40 text-yellow-400 border border-yellow-700/50';
+          statusText.textContent = 'Degraded';
+        }
+
+        // Stats — get from first queue or aggregated
+        const stats = await api('/api/stats', 5000).catch(() => ({}));
+        $('queuesCount').textContent = stats.queueCount ?? (Array.isArray(queues) ? queues.length : queues.queues?.length) ?? '—';
+        $('totalJobs').textContent = stats.totalJobs ?? '—';
+        $('pendingJobs').textContent = stats.pendingJobs ?? '—';
+        $('completedJobs').textContent = stats.completedJobs ?? '—';
+
+        // Queues list
+        let queues;
+        try {
+          queues = await api('/api/queues', 5000);
+        } catch {
+          queues = [];
+        }
+        const queuesArr = Array.isArray(queues) ? queues : (queues.queues ?? []);
+        if (queuesArr.length === 0) {
+          $('queuesList').innerHTML = `<div class="p-5 text-center text-muted text-sm">No queues created yet</div>`;
+        } else {
+          $('queuesList').innerHTML = queuesArr.map(renderQueue).join('');
+        }
+        $('queuesUpdated').textContent = `updated ${new Date().toLocaleTimeString()}`;
+
+      } catch (err) {
+        const statusBadge = $('statusBadge');
+        statusBadge.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-red-900/40 text-red-400 border border-red-700/50';
+        $('statusText').textContent = 'Unreachable';
+        $('queuesList').innerHTML = `<div class="p-5 text-center text-red-400 text-sm">Connection lost: ${err.message}</div>`;
+      }
+
+      btn.textContent = '↻ Refresh';
+      btn.disabled = false;
+    }
+
+    // Init
+    $('apiUrl').textContent = `API: ${API_BASE}`;
+    refresh();
+    setInterval(refresh, 15000); // auto-refresh every 15s
+  </script>
 </body>
 </html>
