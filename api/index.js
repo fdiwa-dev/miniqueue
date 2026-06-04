@@ -20,6 +20,16 @@ app.get('/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'demo', 'index.html'));
 });
 
+// Serve Status Page tool
+app.get('/status-page', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'tools', 'status-page', 'index.html'));
+});
+
+// Redirect /status to status-page
+app.get('/status', (req, res) => {
+  res.redirect('/status-page');
+});
+
 // Health
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'miniqueue', version: '1.0.0' });

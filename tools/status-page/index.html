@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simple Status Page — Générateur de page de statut gratuit</title>
+<meta name="description" content="Générez une page de statut gratuite pour vos projets en 30 secondes. Pas de création de compte, pas de pub.">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:#1a202c;line-height:1.5;min-height:100vh}
+header{background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;padding:40px 20px;text-align:center}
+header h1{font-size:2.5rem;margin-bottom:8px}
+header p{font-size:1.1rem;opacity:.85;max-width:600px;margin:0 auto}
+.container{max-width:1000px;margin:0 auto;padding:20px}
+.card{background:#fff;border-radius:12px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card h2{font-size:1.2rem;margin-bottom:16px;color:#111}
+label{display:block;font-size:.9rem;font-weight:600;margin-bottom:6px;color:#333}
+input[type=text],input[type=url],textarea,select{width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:.95rem;outline:none;margin-bottom:16px;transition:border-color .2s;font-family:inherit}
+input:focus,textarea:focus{border-color:#2563eb}
+textarea{min-height:80px;resize:vertical}
+.btn{display:inline-block;padding:12px 28px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:.95rem;transition:background .15s}
+.btn:hover{background:#1d4ed8}
+.btn-success{background:#16a34a}
+.btn-success:hover{background:#15803d}
+.btn-outline{background:transparent;border:2px solid #2563eb;color:#2563eb;padding:10px 24px}
+.btn-outline:hover{background:#2563eb;color:#fff}
+.flex{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.mt-4{margin-top:16px}
+.mb-4{margin-bottom:16px}
+.gap-4{gap:16px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.preview-section{background:#0f172a;border-radius:12px;overflow:hidden;margin-top:20px}
+.preview-header{background:#1e293b;color:#94a3b8;padding:12px 20px;font-size:.85rem;display:flex;justify-content:space-between;align-items:center}
+.preview-header span{display:flex;align-items:center;gap:8px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.dot-green{background:#22c55e}
+.dot-yellow{background:#eab308}
+.dot-red{background:#ef4444}
+.preview-body{padding:20px;min-height:200px}
+.service-item{background:#1e293b;border-radius:8px;padding:16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;color:#e2e8f0}
+.service-name{font-weight:600;font-size:.95rem}
+.service-status{font-size:.85rem;padding:4px 12px;border-radius:20px}
+.service-status.up{background:#166534;color:#86efac}
+.service-status.down{background:#7f1d1d;color:#fca5a5}
+.service-status.degraded{background:#713f12;color:#fcd34d}
+.tagline{color:#64748b;font-size:.9rem;margin-top:4px}
+.copy-area{background:#f8fafc;border:2px dashed #cbd5e1;border-radius:8px;padding:16px;font-family:monospace;font-size:.85rem;white-space:pre-wrap;word-break:break-all;max-height:300px;overflow:auto}
+.hidden{display:none}
+.badge{display:inline-block;background:#dbeafe;color:#1e40af;padding:2px 10px;border-radius:20px;font-size:.75rem;font-weight:600;margin-left:8px}
+footer{text-align:center;padding:40px 20px;color:#94a3b8;font-size:.85rem}
+footer a{color:#2563eb;text-decoration:none}
+@media(max-width:640px){
+  .grid-2{grid-template-columns:1fr}
+  header h1{font-size:1.8rem}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📊 Simple Status Page</h1>
+  <p>Générez une page de statut gratuite pour vos projets en 30 secondes. Pas de compte, pas de pub.</p>
+  <p style="margin-top:16px;font-size:.85rem;opacity:.7">Un outil gratuit par <a href="https://miniqueue.vercel.app" style="color:#93c5fd;text-decoration:underline">MiniQueue</a> 🚀</p>
+</header>
+
+<div class="container">
+
+<div class="grid-2">
+  <div class="card">
+    <h2>✏️ Configure ta page</h2>
+    <label>Nom du projet</label>
+    <input type="text" id="projectName" value="Mon Projet" placeholder="Mon API / Mon SaaS">
+    
+    <label>URL du projet (optionnel)</label>
+    <input type="url" id="projectUrl" placeholder="https://monprojet.com">
+    
+    <label>Tagline (optionnel)</label>
+    <textarea id="tagline" placeholder="API status, uptime monitoring...">API Status &amp; Monitoring</textarea>
+    
+    <label>Services à monitorer</label>
+    <div id="servicesList">
+      <div class="flex mb-4" style="gap:8px">
+        <input type="text" class="service-name-input" value="API" style="flex:1;margin-bottom:0" placeholder="Nom du service">
+        <select class="service-status-input" style="width:140px;margin-bottom:0;padding:10px">
+          <option value="up">✅ Opérationnel</option>
+          <option value="degraded">⚠️ Dégradé</option>
+          <option value="down">❌ En panne</option>
+        </select>
+      </div>
+      <div class="flex mb-4" style="gap:8px">
+        <input type="text" class="service-name-input" value="Website" style="flex:1;margin-bottom:0" placeholder="Nom du service">
+        <select class="service-status-input" style="width:140px;margin-bottom:0;padding:10px">
+          <option value="up" selected>✅ Opérationnel</option>
+          <option value="degraded">⚠️ Dégradé</option>
+          <option value="down">❌ En panne</option>
+        </select>
+      </div>
+      <div class="flex mb-4" style="gap:8px">
+        <input type="text" class="service-name-input" value="Dashboard" style="flex:1;margin-bottom:0" placeholder="Nom du service">
+        <select class="service-status-input" style="width:140px;margin-bottom:0;padding:10px">
+          <option value="up" selected>✅ Opérationnel</option>
+          <option value="degraded">⚠️ Dégradé</option>
+          <option value="down">❌ En panne</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-success" onclick="generateStatusPage()">🔨 Générer la page</button>
+  </div>
+
+  <div>
+    <div class="card">
+      <h2>📋 Aperçu</h2>
+      <div id="previewArea">
+        <div class="preview-section">
+          <div class="preview-header">
+            <span><span class="dot dot-green"></span> Tous les systèmes opérationnels</span>
+            <span id="previewDate">04 juin 2026</span>
+          </div>
+          <div class="preview-body" id="previewBody">
+            <div class="service-item">
+              <div>
+                <div class="service-name">API</div>
+                <div class="tagline" id="previewTagline">API Status &amp; Monitoring</div>
+              </div>
+              <span class="service-status up">✅ Opérationnel</span>
+            </div>
+            <div class="service-item">
+              <div><div class="service-name">Website</div></div>
+              <span class="service-status up">✅ Opérationnel</span>
+            </div>
+            <div class="service-item">
+              <div><div class="service-name">Dashboard</div></div>
+              <span class="service-status up">✅ Opérationnel</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card hidden" id="resultCard">
+      <h2>📝 Code HTML prêt à copier</h2>
+      <p style="font-size:.85rem;color:#666;margin-bottom:12px">Héberge cette page sur GitHub Pages, Vercel, Netlify, ou n'importe où.</p>
+      <div class="copy-area" id="htmlOutput"></div>
+      <button class="btn mt-4" onclick="copyHTML()">📋 Copier le code</button>
+      <p style="margin-top:12px;font-size:.8rem;color:#888">
+        🔗 Powered by <a href="https://miniqueue.vercel.app" style="color:#2563eb">MiniQueue</a> — Simple job queue API
+      </p>
+    </div>
+  </div>
+</div>
+
+<p style="text-align:center;margin:20px 0;padding:12px;background:#fef3c7;border-radius:8px;font-size:.9rem;color:#92400e">
+  💡 <strong>Astuce :</strong> Tu peux héberger cette page gratuitement sur 
+  <a href="https://pages.github.com" style="color:#2563eb">GitHub Pages</a>, 
+  <a href="https://vercel.com" style="color:#2563eb">Vercel</a> ou 
+  <a href="https://netlify.com" style="color:#2563eb">Netlify</a>. 
+  Mets à jour le statut en modifiant le fichier HTML !
+</p>
+
+</div>
+
+<footer>
+  <p>
+    <a href="https://miniqueue.vercel.app">🚀 MiniQueue</a> — 
+    <a href="https://github.com/fdiwa-dev/miniqueue">GitHub</a> — 
+    <a href="https://miniqueue.lemonsqueezy.com">Pricing</a>
+  </p>
+  <p style="margin-top:6px">Un outil gratuit par Fdiwa. Pas de tracking, pas de pub, pas de compte requis.</p>
+</footer>
+
+<script>
+function getServices() {
+  const names = document.querySelectorAll('.service-name-input');
+  const statuses = document.querySelectorAll('.service-status-input');
+  const services = [];
+  for (let i = 0; i < names.length; i++) {
+    if (names[i].value.trim()) {
+      services.push({ name: names[i].value.trim(), status: statuses[i].value });
+    }
+  }
+  return services;
+}
+
+function updatePreview() {
+  const services = getServices();
+  const projectName = document.getElementById('projectName').value || 'Mon Projet';
+  const tagline = document.getElementById('tagline').value || '';
+  const d = new Date();
+  const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  
+  const dateStr = d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+  document.getElementById('previewDate').textContent = dateStr;
+  
+  const allUp = services.every(s => s.status === 'up');
+  const allDown = services.every(s => s.status === 'down');
+  const dot = document.querySelector('.preview-header .dot');
+  const headerText = document.querySelector('.preview-header span');
+  
+  if (allUp) {
+    dot.className = 'dot dot-green';
+    headerText.innerHTML = '<span class="dot dot-green"></span> Tous les systèmes opérationnels';
+  } else if (allDown) {
+    dot.className = 'dot dot-red';
+    headerText.innerHTML = '<span class="dot dot-red"></span> Incident majeur en cours';
+  } else {
+    dot.className = 'dot dot-yellow';
+    headerText.innerHTML = '<span class="dot dot-yellow"></span> Quelques services perturbés';
+  }
+  
+  document.getElementById('previewTagline').textContent = tagline || projectName + ' Status';
+  
+  const body = document.getElementById('previewBody');
+  body.innerHTML = services.map(s => {
+    const labels = { up: '✅ Opérationnel', degraded: '⚠️ Dégradé', down: '❌ En panne' };
+    return '<div class="service-item"><div><div class="service-name">' + escapeHtml(s.name) + '</div></div><span class="service-status ' + s.status + '">' + labels[s.status] + '</span></div>';
+  }).join('');
+  
+  if (tagline) {
+    const firstItem = body.querySelector('.service-item:first-child .tagline');
+    if (firstItem) firstItem.textContent = tagline;
+  }
+}
+
+function escapeHtml(text) {
+  const d = document.createElement('div');
+  d.textContent = text;
+  return d.innerHTML;
+}
+
+function generateStatusPage() {
+  updatePreview();
+  const services = getServices();
+  const projectName = document.getElementById('projectName').value || 'Mon Projet';
+  const projectUrl = document.getElementById('projectUrl').value || '';
+  const tagline = document.getElementById('tagline').value || '';
+  const d = new Date();
+  const dateStr = d.toISOString().split('T')[0];
+  
+  const allUp = services.every(s => s.status === 'up');
+  let globalStatus, dotColor, headerMsg;
+  if (allUp) { globalStatus = 'all-good'; dotColor = '#22c55e'; headerMsg = 'Tous les systèmes opérationnels'; }
+  else if (services.every(s => s.status === 'down')) { globalStatus = 'major'; dotColor = '#ef4444'; headerMsg = 'Incident majeur en cours'; }
+  else { globalStatus = 'degraded'; dotColor = '#eab308'; headerMsg = 'Quelques services perturbés'; }
+  
+  const statusLabels = { up: '✅ Opérationnel', degraded: '⚠️ Dégradé', down: '❌ En panne' };
+  const statusColors = { up: '#166534', degraded: '#713f12', down: '#7f1d1d' };
+  const statusTextColors = { up: '#86efac', degraded: '#fcd34d', down: '#fca5a5' };
+  
+  const servicesHTML = services.map(s => `
+      <div style="background:#1e293b;border-radius:8px;padding:16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+        <div style="color:#e2e8f0;font-weight:600;font-size:.95rem">${escapeHtml(s.name)}</div>
+        <span style="font-size:.85rem;padding:4px 12px;border-radius:20px;background:${statusColors[s.status]};color:${statusTextColors[s.status]}">${statusLabels[s.status]}</span>
+      </div>`).join('');
+  
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHtml(projectName)} — Status</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;display:flex;flex-direction:column}
+.container{max-width:640px;margin:0 auto;padding:40px 20px;flex:1}
+header{margin-bottom:32px}
+h1{font-size:1.8rem;margin-bottom:4px}
+.tagline{color:#64748b;font-size:.9rem}
+.status-badge{display:flex;align-items:center;gap:8px;background:#1e293b;padding:16px 20px;border-radius:12px;margin-bottom:24px;font-size:.95rem}
+.dot{width:12px;height:12px;border-radius:50%;background:${dotColor}}
+.last-update{color:#64748b;font-size:.85rem;margin-bottom:24px}
+.services{margin-bottom:24px}
+.service-item{background:#1e293b;border-radius:8px;padding:16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.service-name{font-weight:600;font-size:.95rem}
+.service-status{font-size:.85rem;padding:4px 12px;border-radius:20px}
+${services.map(s => '.service-status.' + s.status + '{background:' + statusColors[s.status] + ';color:' + statusTextColors[s.status] + '}').join('\n')}
+.history{margin-top:32px}
+.history h2{font-size:1.1rem;margin-bottom:12px}
+.history-item{background:#1e293b;border-radius:8px;padding:12px 16px;margin-bottom:8px;display:flex;justify-content:space-between;font-size:.85rem;color:#94a3b8}
+footer{text-align:center;padding:24px;color:#475569;font-size:.8rem}
+footer a{color:#60a5fa;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>${escapeHtml(projectName)}${projectUrl ? ' <a href="' + escapeHtml(projectUrl) + '" style="color:#64748b;text-decoration:none;font-size:1rem">↗</a>' : ''}</h1>
+    ${tagline ? '<p class="tagline">' + escapeHtml(tagline) + '</p>' : ''}
+  </header>
+  
+  <div class="status-badge">
+    <span class="dot"></span>
+    <span>${headerMsg}</span>
+  </div>
+  
+  <p class="last-update">🕐 Dernière mise à jour : ${dateStr}</p>
+  
+  <div class="services">
+    ${servicesHTML}
+  </div>
+  
+  <div class="history">
+    <h2>📜 Historique</h2>
+    <div class="history-item">
+      <span>✅ Tous les systèmes opérationnels</span>
+      <span>${dateStr}</span>
+    </div>
+  </div>
+</div>
+<footer>
+  <p>Page générée par <a href="https://miniqueue.vercel.app">MiniQueue</a> — Simple job queue API</p>
+</footer>
+</body>
+</html>`;
+
+  document.getElementById('htmlOutput').textContent = html;
+  document.getElementById('resultCard').classList.remove('hidden');
+  document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+function copyHTML() {
+  const text = document.getElementById('htmlOutput').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('#resultCard .btn');
+    btn.textContent = '✅ Copié !';
+    setTimeout(() => { btn.textContent = '📋 Copier le code'; }, 2000);
+  });
+}
+
+// Auto-update preview on input
+document.addEventListener('input', updatePreview);
+</script>
+</body>
+</html>
