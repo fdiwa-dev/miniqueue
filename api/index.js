@@ -23,7 +23,7 @@ app.get('/dashboard', (req, res) => {
 
 // Serve Status Page tool
 app.get('/status-page', (req, res) => {
-  res.sendFile(path.join(BASE, 'tools', 'status-page', 'index.html'));
+  res.sendFile(path.join(BASE, 'status-page.html'));
 });
 
 // Redirect /status to status-page
