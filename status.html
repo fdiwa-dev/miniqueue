@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>miniqueue — Status</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;display:flex;flex-direction:column}
+.container{max-width:640px;margin:0 auto;padding:40px 20px;flex:1}
+header{margin-bottom:32px}
+h1{font-size:1.8rem;margin-bottom:4px}
+.tagline{color:#64748b;font-size:.9rem}
+.status-badge{display:flex;align-items:center;gap:8px;background:#1e293b;padding:16px 20px;border-radius:12px;margin-bottom:24px;font-size:.95rem}
+.dot{width:12px;height:12px;border-radius:50%;background:#22c55e}
+.last-update{color:#64748b;font-size:.85rem;margin-bottom:24px}
+.services{margin-bottom:24px}
+.service-item{background:#1e293b;border-radius:8px;padding:16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.service-name{font-weight:600;font-size:.95rem}
+.service-status{font-size:.85rem;padding:4px 12px;border-radius:20px}
+.service-status.up{background:#166534;color:#86efac}
+.history{margin-top:32px}
+.history h2{font-size:1.1rem;margin-bottom:12px}
+.history-item{background:#1e293b;border-radius:8px;padding:12px 16px;margin-bottom:8px;display:flex;justify-content:space-between;font-size:.85rem;color:#94a3b8}
+footer{text-align:center;padding:24px;color:#475569;font-size:.8rem}
+footer a{color:#60a5fa;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>miniqueue ↗</h1>
+    <p class="tagline">API Status & Monitoring</p>
+  </header>
+  <div class="status-badge">
+    <span class="dot"></span>
+    <span>Tous les systèmes opérationnels</span>
+  </div>
+  <p class="last-update">🕐 Dernière mise à jour : 4 juin 2026</p>
+  <div class="services">
+    <div class="service-item"><div class="service-name">API</div><span class="service-status up">✅ Opérationnel</span></div>
+    <div class="service-item"><div class="service-name">Website</div><span class="service-status up">✅ Opérationnel</span></div>
+    <div class="service-item"><div class="service-name">Dashboard</div><span class="service-status up">✅ Opérationnel</span></div>
+  </div>
+  <div class="history">
+    <h2>📜 Historique</h2>
+    <div class="history-item"><span>✅ Tous les systèmes opérationnels</span><span>4 juin 2026</span></div>
+  </div>
+</div>
+<footer>
+  <p>Page générée par <a href="https://miniqueue.vercel.app">MiniQueue</a> — Simple job queue API</p>
+</footer>
+</body>
+</html>
