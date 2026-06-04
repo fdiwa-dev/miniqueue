@@ -145,6 +145,9 @@ footer a{color:#2563eb;text-decoration:none}
       <p style="margin-top:12px;font-size:.8rem;color:#888">
         🔗 Powered by <a href="https://miniqueue.vercel.app" style="color:#2563eb">MiniQueue</a> — Simple job queue API
       </p>
+      <div class="flex" style="gap:8px;margin-top:12px">
+        <button class="btn btn-outline" onclick="exportPDF()" style="font-size:.85rem;padding:10px 20px">📄 Exporter en PDF</button>
+      </div>
     </div>
   </div>
 </div>
@@ -324,6 +327,58 @@ function copyHTML() {
     btn.textContent = '✅ Copié !';
     setTimeout(() => { btn.textContent = '📋 Copier le code'; }, 2000);
   });
+}
+
+function exportPDF() {
+  const services = getServices();
+  const projectName = document.getElementById('projectName').value || 'Mon Projet';
+  const tagline = document.getElementById('tagline').value || '';
+  const d = new Date();
+  const dateStr = d.toISOString().slice(0,10);
+  
+  const allUp = services.every(s => s.status === 'up');
+  let globalDot, headerMsg;
+  if (allUp) { globalDot = '🟢'; headerMsg = 'Tous les systèmes opérationnels'; }
+  else if (services.every(s => s.status === 'down')) { globalDot = '🔴'; headerMsg = 'Incident majeur en cours'; }
+  else { globalDot = '🟡'; headerMsg = 'Quelques services perturbés'; }
+  
+  const labels = { up: '✅ Opérationnel', degraded: '⚠️ Dégradé', down: '❌ En panne' };
+  
+  // Build a print-optimized page
+  const printDoc = window.open('', '_blank');
+  printDoc.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + projectName + ' — Status Report</title>');
+  printDoc.document.write('<style>');
+  printDoc.document.write('*{margin:0;padding:0;box-sizing:border-box}');
+  printDoc.document.write('body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#1a202c;padding:40px;line-height:1.5}');
+  printDoc.document.write('h1{font-size:24px;margin-bottom:4px}');
+  printDoc.document.write('.tagline{color:#666;font-size:14px;margin-bottom:24px}');
+  printDoc.document.write('.status-badge{font-size:18px;padding:16px;background:#f0f4f8;border-radius:8px;margin-bottom:16px}');
+  printDoc.document.write('.date{color:#666;font-size:13px;margin-bottom:20px}');
+  printDoc.document.write('table{width:100%;border-collapse:collapse}');
+  printDoc.document.write('th{text-align:left;padding:10px 12px;background:#f0f4f8;font-size:13px;color:#666;text-transform:uppercase}');
+  printDoc.document.write('td{padding:12px;border-bottom:1px solid #e2e8f0;font-size:14px}');
+  printDoc.document.write('.up{color:#16a34a;font-weight:600} .degraded{color:#ca8a04;font-weight:600} .down{color:#dc2626;font-weight:600}');
+  printDoc.document.write('.footer{margin-top:32px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center}');
+  printDoc.document.write('@media print{body{padding:20px}}');
+  printDoc.document.write('</style></head><body>');
+  printDoc.document.write('<h1>' + projectName + '</h1>');
+  if (tagline) printDoc.document.write('<p class="tagline">' + tagline + '</p>');
+  printDoc.document.write('<div class="status-badge">' + globalDot + ' ' + headerMsg + '</div>');
+  printDoc.document.write('<p class="date">📅 Rapport du ' + d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear() + '</p>');
+  printDoc.document.write('<table><thead><tr><th>Service</th><th>Statut</th></tr></thead><tbody>');
+  services.forEach(s => {
+    printDoc.document.write('<tr><td>' + s.name + '</td><td class="' + s.status + '">' + labels[s.status] + '</td></tr>');
+  });
+  printDoc.document.write('</tbody></table>');
+  printDoc.document.write('<div class="footer">Généré par Simple Status Page — miniqueue.vercel.app/status-page</div>');
+  printDoc.document.write('</body></html>');
+  printDoc.document.close();
+  
+  // Trigger print/save as PDF
+  setTimeout(() => {
+    printDoc.focus();
+    printDoc.print();
+  }, 500);
 }
 
 // Auto-update preview on input
