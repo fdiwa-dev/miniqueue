@@ -1,37 +1,57 @@
 #!/bin/bash
-# Garde MiniQueue en vie + tunnel Cloudflare à jour
-# À lancer au démarrage : /home/mehdi/.openclaw/workspace/miniqueue/keep-alive.sh
+# MiniQueue Monitor — vérifie l'état de tous les services
+# Appelé par le cron toutes les 10 minutes
 
-QUEUE_DIR="/home/mehdi/.openclaw/workspace/miniqueue"
-LOG="$QUEUE_DIR/keep-alive.log"
+API="https://miniqueue.vercel.app"
+SITE="https://miniqueue.vercel.app"
+GITHUB="https://github.com/fdiwa-dev/miniqueue"
+DASHBOARD="https://miniqueue.vercel.app/dashboard"
+LOG="/tmp/miniqueue-monitor.log"
 
-echo "[$(date)] Keep-alive démarré" >> "$LOG"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] === MiniQueue Health Check ===" > $LOG
 
-# 1. Vérifier serveur MiniQueue
-if ! curl -sf http://localhost:3000/api/health > /dev/null 2>&1; then
-  echo "[$(date)] Serveur mort, relance..." >> "$LOG"
-  cd "$QUEUE_DIR" && node src/index.js &
-  sleep 2
+# 1. API Health
+HTTP=$(curl -s -o /dev/null -w "%{http_code}" $API/api/health --max-time 10 2>/dev/null)
+if [ "$HTTP" = "200" ]; then
+  echo "✅ API Health: OK (200)" >> $LOG
+else
+  echo "❌ API Health: ÉCHEC ($HTTP)" >> $LOG
 fi
 
-# 2. Vérifier tunnel Cloudflare
-TUNNEL_PID=$(pgrep -f "cloudflared.*tunnel.*localhost:3000" | head -1)
-if [ -z "$TUNNEL_PID" ]; then
-  echo "[$(date)] Tunnel mort, relance..." >> "$LOG"
-  /tmp/cloudflared tunnel --url http://localhost:3000 > /tmp/cloudflared.log 2>&1 &
-  sleep 5
-  NEW_URL=$(grep -oP 'https://[a-z0-9-]+\.trycloudflare\.com' /tmp/cloudflared.log | head -1)
-  if [ -n "$NEW_URL" ]; then
-    echo "[$(date)] Nouveau tunnel: $NEW_URL" >> "$LOG"
-    sed -i "s|https://[a-z0-9-]*\.trycloudflare\.com|$NEW_URL|g" "$QUEUE_DIR/landing/index.html"
-    sed -i "s|https://[a-z0-9-]*\.trycloudflare\.com|$NEW_URL|g" "$QUEUE_DIR/docs/index.html"
-    cd "$QUEUE_DIR" && git add landing/index.html docs/index.html && git commit -m "auto: mise à jour tunnel Cloudflare" && git push 2>/dev/null
-  fi
+# 2. Homepage
+HTTP=$(curl -s -o /dev/null -w "%{http_code}" $SITE/ --max-time 10 2>/dev/null)
+if [ "$HTTP" = "200" ]; then
+  echo "✅ Homepage: OK (200)" >> $LOG
+else
+  echo "❌ Homepage: ÉCHEC ($HTTP)" >> $LOG
 fi
 
-# 3. Vérifier la page GitHub Pages
-if ! curl -sf https://fdiwa-dev.github.io/miniqueue/ > /dev/null 2>&1; then
-  echo "[$(date)] GitHub Pages injoignable !" >> "$LOG"
+# 3. Dashboard
+HTTP=$(curl -s -o /dev/null -w "%{http_code}" $DASHBOARD --max-time 10 2>/dev/null)
+if [ "$HTTP" = "200" ]; then
+  echo "✅ Dashboard: OK (200)" >> $LOG
+else
+  echo "❌ Dashboard: ÉCHEC ($HTTP)" >> $LOG
 fi
 
-echo "[$(date)] Check terminé" >> "$LOG"
+# 4. Stats
+STATS=$(curl -s $API/api/stats --max-time 10 2>/dev/null)
+if [ -n "$STATS" ]; then
+  echo "✅ Stats: $STATS" >> $LOG
+else
+  echo "❌ Stats: Pas de réponse" >> $LOG
+fi
+
+# 5. GitHub
+HTTP=$(curl -s -o /dev/null -w "%{http_code}" $GITHUB --max-time 10 2>/dev/null)
+if [ "$HTTP" = "200" ]; then
+  echo "✅ GitHub: OK (200)" >> $LOG
+else
+  echo "❌ GitHub: ÉCHEC ($HTTP)" >> $LOG
+fi
+
+echo "---" >> $LOG
+echo "Terminé." >> $LOG
+
+# Read stats to show overview
+cat $LOG
