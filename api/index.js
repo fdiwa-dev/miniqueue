@@ -8,21 +8,22 @@ const path = require('path');
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, '..')));
+const BASE = path.resolve(__dirname, '..');
+app.use(express.static(BASE));
 
 // Serve index.html for root
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'index.html'));
+  res.sendFile(path.join(BASE, 'index.html'));
 });
 
 // Serve dashboard
 app.get('/dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'demo', 'index.html'));
+  res.sendFile(path.join(BASE, 'demo', 'index.html'));
 });
 
 // Serve Status Page tool
 app.get('/status-page', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'tools', 'status-page', 'index.html'));
+  res.sendFile(path.join(BASE, 'tools', 'status-page', 'index.html'));
 });
 
 // Redirect /status to status-page
