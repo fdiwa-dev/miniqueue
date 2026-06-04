@@ -9,6 +9,8 @@
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/index.js" },
     { "src": "/dashboard", "dest": "/api/index.js" },
+    { "src": "/status-page", "dest": "/api/index.js" },
+    { "src": "/status", "dest": "/api/index.js" },
     { "src": "/", "dest": "/api/index.js" }
   ]
 }
