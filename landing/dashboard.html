@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MiniQueue Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0891B2',
+            surface: '#0F172A',
+            card: '#1E293B',
+            muted: '#64748B',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .stat-card { transition: transform 0.15s, box-shadow 0.15s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .live-dot { animation: pulse-dot 2s ease-in-out infinite; }
+  </style>
+</head>
+<body class="bg-surface text-white min-h-screen">
+  <div class="max-w-6xl mx-auto px-4 py-6">
+
+    <!-- HEADER -->
+    <header class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">📦 MiniQueue</h1>
+        <p class="text-muted text-sm mt-0.5">Job Queue API · Real-time Dashboard</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="statusBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-green-900/40 text-green-400 border border-green-700/50">
+          <span class="live-dot w-2 h-2 rounded-full bg-green-400"></span>
+          <span id="statusText">Connected</span>
+        </span>
+        <button onclick="refresh()" class="px-4 py-2 bg-card border border-gray-700 rounded-lg text-sm hover:bg-gray-700/50 transition-colors">
+          ↻ Refresh
+        </button>
+      </div>
+    </header>
+
+    <!-- STATS GRID -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="stat-card bg-card rounded-xl p-5 border border-gray-800">
+        <p class="text-muted text-xs uppercase tracking-wider mb-1">Queues</p>
+        <p id="queuesCount" class="text-3xl font-bold">—</p>
+      </div>
+      <div class="stat-card bg-card rounded-xl p-5 border border-gray-800">
+        <p class="text-muted text-xs uppercase tracking-wider mb-1">Total Jobs</p>
+        <p id="totalJobs" class="text-3xl font-bold">—</p>
+      </div>
+      <div class="stat-card bg-card rounded-xl p-5 border border-gray-800">
+        <p class="text-muted text-xs uppercase tracking-wider mb-1">Pending</p>
+        <p id="pendingJobs" class="text-3xl font-bold text-yellow-400">—</p>
+      </div>
+      <div class="stat-card bg-card rounded-xl p-5 border border-gray-800">
+        <p class="text-muted text-xs uppercase tracking-wider mb-1">Completed</p>
+        <p id="completedJobs" class="text-3xl font-bold text-green-400">—</p>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="grid lg:grid-cols-3 gap-6">
+
+      <!-- QUEUES LIST -->
+      <div class="lg:col-span-2 bg-card rounded-xl border border-gray-800">
+        <div class="px-5 py-4 border-b border-gray-800 flex items-center justify-between">
+          <h2 class="font-semibold">Queues</h2>
+          <span id="queuesUpdated" class="text-xs text-muted"></span>
+        </div>
+        <div id="queuesList" class="divide-y divide-gray-800">
+          <div class="p-5 text-center text-muted text-sm">Loading queues...</div>
+        </div>
+      </div>
+
+      <!-- RECENT ACTIVITY -->
+      <div class="bg-card rounded-xl border border-gray-800">
+        <div class="px-5 py-4 border-b border-gray-800">
+          <h2 class="font-semibold">Recent Activity</h2>
+        </div>
+        <div id="activityList" class="divide-y divide-gray-800 max-h-96 overflow-y-auto">
+          <div class="p-5 text-center text-muted text-sm">No activity yet</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- API INFO -->
+    <footer class="mt-8 pt-6 border-t border-gray-800 text-xs text-muted flex items-center justify-between">
+      <span>MiniQueue API</span>
+      <span id="apiUrl"></span>
+    </footer>
+  </div>
+
+  <script>
+    // Config — change this to your tunnel URL
+    const API_BASE = 'https://ide-fathers-likewise-kelly.trycloudflare.com';
+
+    // Helpers
+    const $ = id => document.getElementById(id);
+
+    function ago(dateStr) {
+      const sec = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+      if (sec < 5) return 'just now';
+      if (sec < 60) return `${sec}s ago`;
+      const min = Math.floor(sec / 60);
+      if (min < 60) return `${min}m ago`;
+      return `${Math.floor(min / 60)}h ago`;
+    }
+
+    // Fetch with timeout
+    async function api(path, timeoutMs = 5000) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const res = await fetch(`${API_BASE}${path}`, { signal: controller.signal });
+        clearTimeout(id);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      } catch (e) {
+        clearTimeout(id);
+        throw e;
+      }
+    }
+
+    // Render a single queue row
+    function renderQueue(q) {
+      const isFailing = q.failedCount > 0 && q.failedCount > q.completedCount * 0.5;
+      const statusColor = q.pendingCount > 10 ? 'text-yellow-400'
+                        : isFailing ? 'text-red-400'
+                        : 'text-green-400';
+      const statusDot = q.pendingCount > 10 ? 'bg-yellow-400'
+                       : isFailing ? 'bg-red-400'
+                       : 'bg-green-400';
+      return `
+        <div class="px-5 py-4 hover:bg-white/5 transition-colors">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full ${statusDot}"></span>
+              <span class="font-medium text-sm">${q.name || 'default'}</span>
+            </div>
+            <span class="text-xs ${statusColor} font-medium">
+              ${q.pendingCount} pending
+            </span>
+          </div>
+          <div class="flex gap-4 text-xs text-muted">
+            <span>${q.completedCount || 0} completed</span>
+            <span>${q.failedCount || 0} failed</span>
+            ${q.lastActivity ? `<span>Last: ${ago(q.lastActivity)}</span>` : ''}
+          </div>
+          <!-- mini bar -->
+          <div class="mt-2 h-1.5 rounded-full bg-gray-800 overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-300"
+                 style="width: ${Math.min(100, (q.completedCount || 0) / Math.max(1, (q.completedCount + q.failedCount)) * 100)}%;
+                        background: ${isFailing ? '#EF4444' : '#0891B2'};">
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Main refresh
+    async function refresh() {
+      const btn = document.querySelector('button');
+      btn.textContent = '⏳ Refreshing...';
+      btn.disabled = true;
+
+      try {
+        // Health check
+        const health = await api('/api/health', 3000);
+        const statusBadge = $('statusBadge');
+        const statusText = $('statusText');
+
+        if (health && (health.status === 'ok' || health.status === 'healthy')) {
+          statusBadge.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-green-900/40 text-green-400 border border-green-700/50';
+          statusText.textContent = 'Connected';
+        } else {
+          statusBadge.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-yellow-900/40 text-yellow-400 border border-yellow-700/50';
+          statusText.textContent = 'Degraded';
+        }
+
+        // Stats — get from first queue or aggregated
+        const stats = await api('/api/stats', 5000).catch(() => ({}));
+        $('queuesCount').textContent = stats.queueCount ?? (Array.isArray(queues) ? queues.length : queues.queues?.length) ?? '—';
+        $('totalJobs').textContent = stats.totalJobs ?? '—';
+        $('pendingJobs').textContent = stats.pendingJobs ?? '—';
+        $('completedJobs').textContent = stats.completedJobs ?? '—';
+
+        // Queues list
+        let queues;
+        try {
+          queues = await api('/api/queues', 5000);
+        } catch {
+          queues = [];
+        }
+        const queuesArr = Array.isArray(queues) ? queues : (queues.queues ?? []);
+        if (queuesArr.length === 0) {
+          $('queuesList').innerHTML = `<div class="p-5 text-center text-muted text-sm">No queues created yet</div>`;
+        } else {
+          $('queuesList').innerHTML = queuesArr.map(renderQueue).join('');
+        }
+        $('queuesUpdated').textContent = `updated ${new Date().toLocaleTimeString()}`;
+
+      } catch (err) {
+        const statusBadge = $('statusBadge');
+        statusBadge.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium bg-red-900/40 text-red-400 border border-red-700/50';
+        $('statusText').textContent = 'Unreachable';
+        $('queuesList').innerHTML = `<div class="p-5 text-center text-red-400 text-sm">Connection lost: ${err.message}</div>`;
+      }
+
+      btn.textContent = '↻ Refresh';
+      btn.disabled = false;
+    }
+
+    // Init
+    $('apiUrl').textContent = `API: ${API_BASE}`;
+    refresh();
+    setInterval(refresh, 15000); // auto-refresh every 15s
+  </script>
+</body>
+</html>
