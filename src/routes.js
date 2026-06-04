@@ -2,6 +2,7 @@ const queueService = require('./queue');
 const authService = require('./auth');
 const rateLimiter = require('./rateLimit');
 const notifier = require('./telegram');
+const webhookService = require('./webhooks');
 
 function setupRoutes(app) {
   // ============ HEALTH (no auth needed) ============
@@ -191,6 +192,39 @@ function setupRoutes(app) {
       const job = queueService.cancelJob(req.params.id);
       if (!job) return res.status(404).json({ error: 'Job not found' });
       res.json(job);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ============ WEBHOOKS ============
+
+  app.post('/api/webhooks', authMiddleware(false), (req, res) => {
+    try {
+      const { queue_id, url, events } = req.body;
+      if (!queue_id || !url) return res.status(400).json({ error: 'queue_id and url are required' });
+      if (!url.startsWith('http')) return res.status(400).json({ error: 'URL must start with http(s)' });
+      const webhook = webhookService.createWebhook(queue_id, url, events);
+      res.status(201).json(webhook);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/webhooks', authMiddleware(false), (req, res) => {
+    try {
+      const { queue_id } = req.query;
+      res.json(webhookService.listWebhooks(queue_id));
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.delete('/api/webhooks/:id', authMiddleware(false), (req, res) => {
+    try {
+      const deleted = webhookService.deleteWebhook(req.params.id);
+      if (!deleted) return res.status(404).json({ error: 'Webhook not found' });
+      res.json({ success: true });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

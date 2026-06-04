@@ -1,6 +1,7 @@
 const db = require('./db');
 const crypto = require('crypto');
 const uuidv4 = () => crypto.randomUUID();
+const { triggerWebhooks } = require('./webhooks');
 
 class QueueService {
   /**
@@ -89,7 +90,9 @@ class QueueService {
     db.prepare(
       "UPDATE jobs SET status = 'completed', result = ?, completed_at = datetime('now') WHERE id = ?"
     ).run(JSON.stringify(result), id);
-    return this.getJob(id);
+    const job = this.getJob(id);
+    if (job) triggerWebhooks(job, 'completed');
+    return job;
   }
 
   /**
@@ -99,7 +102,9 @@ class QueueService {
     db.prepare(
       "UPDATE jobs SET status = 'failed', error = ?, completed_at = datetime('now') WHERE id = ?"
     ).run(error, id);
-    return this.getJob(id);
+    const job = this.getJob(id);
+    if (job) triggerWebhooks(job, 'failed');
+    return job;
   }
 
   /**
