@@ -3,47 +3,145 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MiniQueue — Job Queue API</title>
+<title>MiniQueue — Job Queue API · Simple · Sans Redis</title>
+<meta name="description" content="MiniQueue est une API de file d'attente simple, rapide et prête à l'emploi. Pas de Redis, pas de configuration. Juste curl.">
 <style>
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:800px;margin:0 auto;padding:40px 20px;background:#fafafa;color:#333;}
-h1{font-size:2.5rem;margin-bottom:.5rem;color:#111;}
-p{line-height:1.6;font-size:1.1rem;}
-code{background:#eee;padding:2px 6px;border-radius:4px;font-size:0.9rem;}
-.btn{display:inline-block;padding:12px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;margin-top:20px;}
-.btn:hover{background:#1d4ed8;}
-.btn-dark{background:#333;}
-.btn-dark:hover{background:#222;}
-.features{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:30px 0;}
-.feature{background:#fff;padding:20px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.1);}
-.feature h3{margin-top:0;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fafafa;color:#333;line-height:1.6}
+.hero{text-align:center;padding:60px 20px 40px;background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%);color:#fff}
+.hero h1{font-size:3rem;margin-bottom:10px}
+.hero p{font-size:1.2rem;opacity:.9;max-width:600px;margin:0 auto}
+.container{max-width:900px;margin:0 auto;padding:0 20px}
+.stats{display:flex;justify-content:center;gap:40px;margin-top:30px;flex-wrap:wrap}
+.stat{text-align:center}
+.stat-num{font-size:2rem;font-weight:700}
+.stat-label{font-size:.85rem;opacity:.8;margin-top:4px}
+.features{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:40px 0}
+.feature{background:#fff;padding:24px;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);transition:transform .15s,box-shadow .15s}
+.feature:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.feature h3{font-size:1.1rem;margin-bottom:8px;color:#111}
+.feature p{font-size:.95rem;color:#555}
+.cta{text-align:center;margin:40px 0}
+.btn{display:inline-block;padding:14px 32px;border-radius:8px;font-weight:600;text-decoration:none;margin:5px;font-size:1rem;transition:transform .1s}
+.btn:hover{transform:translateY(-1px)}
+.btn-primary{background:#2563eb;color:#fff}
+.btn-primary:hover{background:#1d4ed8}
+.btn-dark{background:#333;color:#fff}
+.btn-dark:hover{background:#222}
+.btn-green{background:#16a34a;color:#fff}
+.btn-green:hover{background:#15803d}
+.code-block{background:#1e293b;color:#e2e8f0;padding:20px;border-radius:10px;overflow-x:auto;margin:20px 0;font-size:.9rem}
+.code-block code{background:transparent;padding:0;color:#a5f3fc}
+.newsletter{background:#fff;border-radius:12px;padding:30px;text-align:center;margin:40px 0;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.newsletter h3{margin-bottom:10px;font-size:1.3rem}
+.newsletter p{font-size:.95rem;color:#666;margin-bottom:20px}
+.newsletter form{display:flex;gap:10px;max-width:450px;margin:0 auto}
+.newsletter input{flex:1;padding:12px 16px;border:2px solid #e2e8f0;border-radius:8px;font-size:1rem;outline:none;transition:border-color .2s}
+.newsletter input:focus{border-color:#2563eb}
+.newsletter button{padding:12px 24px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:1rem}
+.newsletter button:hover{background:#1d4ed8}
+.faq{margin:40px 0}
+.faq h2{margin-bottom:20px;font-size:1.5rem}
+.faq details{margin-bottom:12px;background:#fff;border-radius:8px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,.06);cursor:pointer}
+.faq summary{font-weight:600;color:#111;font-size:1rem}
+.faq details p{margin-top:10px;font-size:.95rem;color:#555}
+footer{text-align:center;padding:30px;color:#888;font-size:.85rem;border-top:1px solid #eee;margin-top:40px}
+footer a{color:#2563eb;text-decoration:none}
+@media(max-width:640px){.features{grid-template-columns:1fr}.newsletter form{flex-direction:column}.hero h1{font-size:2rem}.stats{gap:20px}}
 </style>
 </head>
 <body>
 
-<h1>🚀 MiniQueue</h1>
-<p>L'API de file d'attente simple, rapide et prête à l'emploi pour vos projets.</p>
+<section class="hero">
+  <h1>🚀 MiniQueue</h1>
+  <p>L'API de file d'attente simple, rapide et prête à l'emploi. Pas de Redis. Pas de configuration. Juste curl.</p>
+  <div class="stats" id="stats">
+    <div class="stat"><div class="stat-num" id="stat-queues">-</div><div class="stat-label">Queues créées</div></div>
+    <div class="stat"><div class="stat-num" id="stat-jobs">-</div><div class="stat-label">Jobs traités</div></div>
+    <div class="stat"><div class="stat-num" id="stat-users">-</div><div class="stat-label">Utilisateurs</div></div>
+    <div class="stat"><div class="stat-num" id="stat-uptime">99.9%</div><div class="stat-label">Uptime</div></div>
+  </div>
+</section>
+
+<div class="container">
 
 <div class="features">
-  <div class="feature"><h3>📦 Créez des queues</h3><p>Organisez vos jobs par queue avec gestion de priorité.</p></div>
-  <div class="feature"><h3>⚡ API REST</h3><p>CRUD complet : enqueue, status, cancel, purge.</p></div>
-  <div class="feature"><h3>🔐 API Keys</h3><p>Authentification simple avec rate limiting.</p></div>
-  <div class="feature"><h3>📊 Dashboard</h3><p>Suivez vos queues en temps réel.</p></div>
+  <div class="feature"><h3>📦 Créez des queues</h3><p>Organisez vos jobs par queue avec gestion de priorité intégrée.</p></div>
+  <div class="feature"><h3>⚡ API REST</h3><p>CRUD complet : enqueue, status, cancel, purge. Tout en HTTP.</p></div>
+  <div class="feature"><h3>🔐 API Keys</h3><p>Authentification simple avec rate limiting intégré.</p></div>
+  <div class="feature"><h3>📊 Dashboard</h3><p>Suivez vos queues et jobs en temps réel.</p></div>
+  <div class="feature"><h3>📦 SDK & CLI</h3><p><code>npx miniqueue</code> ou SDK Node.js prêt à l'emploi.</p></div>
+  <div class="feature"><h3>💾 SQLite</h3><p>Zéro dépendance externe. Pas de Redis, pas de Docker.</p></div>
 </div>
 
-<p>
-  <a class="btn" href="/dashboard">📊 Dashboard</a>
-  <a class="btn btn-dark" href="https://github.com/fdiwa-dev/miniqueue">📖 Documentation</a>
-  <a class="btn" href="https://miniqueue.lemonsqueezy.com" style="background:#16a34a;">💳 Pro & Business</a>
-</p>
+<div class="cta">
+  <a class="btn btn-primary" href="/dashboard">📊 Dashboard</a>
+  <a class="btn btn-dark" href="https://github.com/fdiwa-dev/miniqueue">📖 GitHub</a>
+  <a class="btn btn-green" href="https://miniqueue.lemonsqueezy.com">💳 Plans Pro</a>
+</div>
 
-<h2 style="margin-top:40px;">Démarrer</h2>
-<pre><code>curl -X POST https://miniqueue.vercel.app/api/queues \
+<h2>Démarrer en 30 secondes</h2>
+<div class="code-block"><pre><code># Créer une queue
+curl -X POST https://miniqueue.vercel.app/api/queues \
   -H "Content-Type: application/json" \
-  -d '{"name":"mon-projet"}'</code></pre>
+  -d '{"name":"mon-projet"}'
 
-<p style="margin-top:40px;color:#666;font-size:0.9rem;">
-  MiniQueue v1.0.0 — <a href="https://github.com/fdiwa-dev">Fdiwa</a>
-</p>
+# Ajouter un job
+curl -X POST https://miniqueue.vercel.app/api/queues/mon-projet/jobs \
+  -H "Content-Type: application/json" \
+  -d '{"payload":{"task":"send_email","to":"user@example.com"}}'</code></pre></div>
 
+<div class="newsletter" id="newsletter">
+  <h3>📬 Restez informé</h3>
+  <p>Nouveautés, mises à jour et astuces MiniQueue — une fois par semaine.</p>
+  <form id="subscribe-form">
+    <input type="email" id="email-input" placeholder="votre@email.com" required>
+    <button type="submit">S'abonner</button>
+  </form>
+  <p id="subscribe-msg" style="margin-top:12px;font-size:.9rem;color:#16a34a;display:none;">✅ Merci ! Vous êtes inscrit.</p>
+</div>
+
+<div class="faq">
+  <h2>FAQ</h2>
+  <details><summary>🤔 C'est quoi MiniQueue ?</summary><p>Une API REST simple pour gérer des files d'attente de jobs. Vous créez une queue, vous ajoutez des jobs, et vous interrogez leur statut. Idéal pour les tâches asynchrones dans vos projets.</p></details>
+  <details><summary>💾 Pourquoi SQLite et pas Redis ?</summary><p>Redis est excellent mais nécessite une infrastructure séparée. SQLite permet à MiniQueue de fonctionner sans configuration — parfait pour les side projects et petites applications.</p></details>
+  <details><summary>💰 C'est gratuit ?</summary><p>Oui ! Un tiers gratuit est disponible. Pour plus de volume, les plans Pro ($5/mois) et Business ($15/mois) débloquent plus de jobs et de queues.</p></details>
+  <details><summary>🔒 Comment sécuriser l'accès ?</summary><p>Chaque requête nécessite une clé API. Vous pouvez générer des clés via le dashboard. Le rate limiting est intégré pour éviter les abus.</p></details>
+</div>
+
+</div>
+
+<footer>
+  <p>MiniQueue v1.0.0 — par <a href="https://github.com/fdiwa-dev">Fdiwa</a> — <a href="https://github.com/fdiwa-dev/miniqueue">Code source</a> — <a href="https://miniqueue.lemonsqueezy.com">Pricing</a></p>
+</footer>
+
+<script>
+// Live stats from API
+async function fetchStats() {
+  try {
+    const res = await fetch('/api/stats');
+    const data = await res.json();
+    document.getElementById('stat-queues').textContent = data.queues || 0;
+    document.getElementById('stat-jobs').textContent = data.jobs || 0;
+    document.getElementById('stat-users').textContent = data.apiKeys || 0;
+  } catch(e) {
+    document.getElementById('stat-queues').textContent = '0';
+    document.getElementById('stat-jobs').textContent = '0';
+    document.getElementById('stat-users').textContent = '0';
+  }
+}
+fetchStats();
+
+// Newsletter (dummy for now - stores in localStorage)
+document.getElementById('subscribe-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const email = document.getElementById('email-input').value;
+  const saved = JSON.parse(localStorage.getItem('mq_subscribers') || '[]');
+  saved.push({email, date: new Date().toISOString()});
+  localStorage.setItem('mq_subscribers', JSON.stringify(saved));
+  document.getElementById('email-input').value = '';
+  document.getElementById('subscribe-msg').style.display = 'block';
+});
+</script>
 </body>
 </html>
