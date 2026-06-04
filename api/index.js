@@ -15,8 +15,16 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'miniqueue', version: '1.0.0' });
 });
 
-// Routes full
-const { setupRoutes } = require('../src/routes');
-setupRoutes(app);
+// Routes full (with fallback for serverless)
+try {
+  const { setupRoutes } = require('../src/routes');
+  setupRoutes(app);
+  console.log('✅ Routes initialized');
+} catch(e) {
+  console.log('❌ Routes error:', e.message);
+  app.get('/api/status', (req, res) => {
+    res.json({ status: 'degraded', error: e.message, version: '1.0.0' });
+  });
+}
 
 module.exports = app;
