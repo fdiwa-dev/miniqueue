@@ -1,11 +1,15 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, '..', 'data', 'miniqueue.db');
+const DB_PATH = process.env.DB_PATH || path.join(process.env.VERCEL ? '/tmp' : __dirname, '..', 'data', 'miniqueue.db');
 
 // Ensure data directory exists
 const fs = require('fs');
-fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+try {
+  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+} catch(e) {
+  console.log('DB mkdir error:', e.message);
+}
 
 const db = new Database(DB_PATH);
 
